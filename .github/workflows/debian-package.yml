@@ -36,6 +36,10 @@ jobs:
     - name: Generate Changelog
       run: ./generate-changelog.sh
 
+    - name: Read Changelog
+      id: changelog
+      run: echo "changelog=$(cat CHANGELOG.md)" >> $GITHUB_ENV
+
     - name: Get latest tag
       id: get_tag
       run: echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
@@ -67,10 +71,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.get_tag.outputs.tag }}
-        release_name: Release ${{ steps.get_tag.outputs.tag }}
-        body: |
-          ## Changelog
-          - Initial release with sig2dot2 and sig2dot-custom
+        name: Release ${{ steps.get_tag.outputs.tag }}
+        body: ${{ env.changelog }}
         draft: false
         prerelease: false
         files: |
