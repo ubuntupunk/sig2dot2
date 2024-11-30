@@ -1,0 +1,9 @@
+Package: sig2dot2
+Version: 0.01
+Section: utils
+Priority: optional
+Architecture: all
+Depends: perl, graphviz, sig2dot
+Maintainer: David Robert Lewis <ubuntupunk@gmail.com>
+Description: A tool for visualizing GPG key signatures.
+ This package provides scripts to generate GraphViz visualizations of GPG key signature relationships.

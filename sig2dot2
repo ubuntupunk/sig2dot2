@@ -1,0 +1,155 @@
+#!/bin/bash
+# sig2dot2 version 0.1
+#
+# Copyright (C) 202 David Robert Lewis aka DavDev
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# Available at: repo.netbones.co.za
+
+# Function to print colorful messages
+print_color() {
+    local color_code=$1
+    local message=$2
+    echo -e "\033[${color_code}m${message}\033[0m"
+}
+
+# Function to check and install GraphViz
+check_graphviz() {
+    print_color "1;34" "Checking for GraphViz installation..."
+    if ! command -v dot &> /dev/null; then
+        print_color "1;33" "GraphViz not found. Attempting to install..."
+        
+        # Check package manager and install
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y graphviz
+        elif command -v dnf &> /dev/null; then
+            sudo dnf install -y graphviz
+        elif command -v yum &> /dev/null; then
+            sudo yum install -y graphviz
+        elif command -v pacman &> /dev/null; then
+            sudo pacman -S --noconfirm graphviz
+        else
+            print_color "1;31" "Error: Could not determine package manager. Please install GraphViz manually."
+            exit 1
+        fi
+        
+        # Verify installation
+        if ! command -v dot &> /dev/null; then
+            print_color "1;31" "Error: GraphViz installation failed."
+            exit 1
+        fi
+        print_color "1;32" "GraphViz successfully installed."
+    else
+        print_color "1;32" "GraphViz is already installed."
+    fi
+}
+
+# Function to check for key relationships
+check_relationships() {
+    local dot_file="$1"
+    local edge_count=$(grep -c '" -> "' "$dot_file")
+    
+    if [ "$edge_count" -eq 0 ]; then
+        print_color "1;31" "No key relationships detected in your GPG keyring!"
+        print_color "1;33" "
+This means your keys haven't been cross-signed with other keys. To create meaningful visualizations, you need:
+1. Multiple GPG keys
+2. Keys that have signed each other
+
+Here's how to create test relationships:
+
+1. Create a test key:
+   gpg --quick-generate-key \"Test User <test@example.com>\"
+
+2. Export your public key:
+   gpg --export -a your@email.com > mykey.asc
+
+3. Share your public key with others and get their keys:
+   - They should import your key: gpg --import mykey.asc
+   - They should sign your key: gpg --sign-key your@email.com
+   - They should export their signed version: gpg --export -a your@email.com > signed_key.asc
+   - You import the signed version: gpg --import signed_key.asc
+
+4. Repeat the process with their keys
+
+For testing, you can also create multiple test keys and sign them yourself:
+   gpg --quick-generate-key \"Test User 1 <test1@example.com>\"
+   gpg --quick-generate-key \"Test User 2 <test2@example.com>\"
+   gpg --sign-key test1@example.com
+   gpg --sign-key test2@example.com
+
+For more detailed instructions, see sig2dot2/TESTING.md
+"
+    fi
+    echo "$edge_count"
+}
+
+# Check and install GraphViz if needed
+check_graphviz
+
+# Create a temporary file for the DOT output
+print_color "1;34" "Checking for GPG signatures..."
+temp_dot=$(mktemp)
+
+# Run gpg and pipe through sig2dot to generate DOT file
+if command -v sig2dot &> /dev/null; then
+    print_color "1;33" "Using system-installed sig2dot..."
+    gpg --list-sigs --with-colons | sig2dot> "$temp_dot"
+
+elif command -v sig2dot-custom &> /dev/null; then
+    print_color "1;33" "Using custom sig2dot..."
+    gpg --list-sigs --with-colons | sig2dot-custom > "$temp_dot"
+
+else
+    print_color "1;33" "Using local sig2dot from the project directory..."
+    gpg --list-sigs --with-colons | ./sig2dot-custom > "$temp_dot"
+fi
+
+# Check if sig2dot succeeded
+if [ $? -ne 0 ]; then
+    print_color "1;31" "Error: sig2dot processing failed"
+    rm "$temp_dot"
+    exit 1
+fi
+
+# Check for key relationships
+edge_count=$(check_relationships "$temp_dot")
+
+# Debugging: Output the DOT file content
+print_color "1;34" "Debugging: Displaying DOT file content..."
+cat "$temp_dot"
+
+# Generate PNG from DOT file
+print_color "1;34" "Generating keysigs.png..."
+dot -Tpng "$temp_dot" -o keysigs.png
+
+# Check if dot succeeded
+if [ $? -ne 0 ]; then
+    print_color "1;31" "Error: dot processing failed"
+    rm "$temp_dot"
+    exit 1
+fi
+
+# Clean up temporary file
+rm "$temp_dot"
+
+print_color "1;32" "Successfully generated keysigs.png"
+
+# Provide guidance if no relationships were detected
+if [ "$edge_count" -eq 0 ]; then
+    print_color "1;33" "
+Note: The generated graph shows keys without relationships. To see connections, ensure keys are cross-signed.
+"
+fi
