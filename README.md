@@ -1,7 +1,7 @@
 # sig2dot2 - a wrapper for sig2dot-custom GPG Key Signature Visualization Tool
 
 ## Overview
-sig2dot2 is a bash shell script that uses sig2dot-custom, a Perl script that generates DOT graph visualizations of GPG key signature relationships. It processes GPG key data and creates a graph where nodes represent GPG keys and edges represent signatures between keys.
+sig2dot2 is a bash shell script wrapper that uses sig2dot-custom, a Perl script that generates DOT graph visualizations of GPG key signature relationships. It processes GPG key data and creates a graph where nodes represent GPG keys and edges represent signatures between keys.
 
 ## Features
 - Processes GPG's colon-delimited output format
@@ -18,7 +18,9 @@ sig2dot2 is a bash shell script that uses sig2dot-custom, a Perl script that gen
 ## Usage
 
 ```bash
-$ sig2dot2 
+$ sig2dot2 #creates keysigs.png
+$ sig2dot2 -s #creates keysigs_self_sig.png
+$ sig2dot2 --debug #extra debugging 
 ```
 
 ## Current Implementation Details
