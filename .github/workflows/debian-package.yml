@@ -15,11 +15,22 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y devscripts debhelper perl graphviz build-essential
+
+    - name: Automated Tagging
+      run: ./tagging-script.sh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get latest tag
+      id: get_tag
+      run: echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
 
     - name: Install project
       run: |
@@ -29,7 +40,7 @@ jobs:
       run: |
         mkdir -p package/DEBIAN
         echo "Package: sig2dot2" > package/DEBIAN/control
-        echo "Version: 0.01" >> package/DEBIAN/control
+        echo "Version: ${{ steps.get_tag.outputs.tag }}" >> package/DEBIAN/control
         echo "Section: utils" >> package/DEBIAN/control
         echo "Priority: optional" >> package/DEBIAN/control
         echo "Architecture: all" >> package/DEBIAN/control
@@ -43,28 +54,19 @@ jobs:
         mv package.deb sig2dot2.deb
 
     - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v2.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v0.1.0
-        release_name: Release v0.1.0
+        tag_name: ${{ steps.get_tag.outputs.tag }}
+        release_name: Release ${{ steps.get_tag.outputs.tag }}
         body: |
           ## Changelog
           - Initial release with sig2dot2 and sig2dot-custom
         draft: false
         prerelease: false
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: sig2dot2.deb
-        asset_name: sig2dot2.deb
-        asset_content_type: application/vnd.debian.binary-package
+        files: |
+          package/*.deb
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v4
