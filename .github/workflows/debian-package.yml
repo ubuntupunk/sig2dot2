@@ -30,7 +30,7 @@ jobs:
         mv ../*.deb ../sig2dot2.deb
 
     - name: Archive artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: sig2dot2
         path: ../sig2dot2.deb
