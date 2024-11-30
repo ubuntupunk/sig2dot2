@@ -63,93 +63,135 @@ check_relationships() {
     
     if [ "$edge_count" -eq 0 ]; then
         print_color "1;31" "No key relationships detected in your GPG keyring!"
-        print_color "1;33" "
-This means your keys haven't been cross-signed with other keys. To create meaningful visualizations, you need:
-1. Multiple GPG keys
-2. Keys that have signed each other
+        print_color "1;33" "\nThis means your keys haven't been cross-signed with other keys. To create meaningful visualizations, you need:"
+        echo "1. Multiple GPG keys"
+        echo "2. Keys that have signed each other"
 
-Here's how to create test relationships:
+        echo "\nHere's how to create test relationships:"
 
-1. Create a test key:
-   gpg --quick-generate-key \"Test User <test@example.com>\"
+        echo "1. Create a test key:"
+        echo "   gpg --quick-generate-key \"Test User <test@example.com>\""
 
-2. Export your public key:
-   gpg --export -a your@email.com > mykey.asc
+        echo "2. Export your public key:"
+        echo "   gpg --export -a your@email.com > mykey.asc"
 
-3. Share your public key with others and get their keys:
-   - They should import your key: gpg --import mykey.asc
-   - They should sign your key: gpg --sign-key your@email.com
-   - They should export their signed version: gpg --export -a your@email.com > signed_key.asc
-   - You import the signed version: gpg --import signed_key.asc
+        echo "3. Share your public key with others and get their keys:"
+        echo "   - They should import your key: gpg --import mykey.asc"
+        echo "   - They should sign your key: gpg --sign-key your@email.com"
+        echo "   - They should export their signed version: gpg --export -a your@email.com > signed_key.asc"
+        echo "   - You import the signed version: gpg --import signed_key.asc"
 
-4. Repeat the process with their keys
+        echo "4. Repeat the process with their keys"
 
-For testing, you can also create multiple test keys and sign them yourself:
-   gpg --quick-generate-key \"Test User 1 <test1@example.com>\"
-   gpg --quick-generate-key \"Test User 2 <test2@example.com>\"
-   gpg --sign-key test1@example.com
-   gpg --sign-key test2@example.com
+        echo "\nFor testing, you can also create multiple test keys and sign them yourself:"
+        echo "   gpg --quick-generate-key \"Test User 1 <test1@example.com>\""
+        echo "   gpg --quick-generate-key \"Test User 2 <test2@example.com>\""
+        echo "   gpg --sign-key test1@example.com"
+        echo "   gpg --sign-key test2@example.com"
 
-For more detailed instructions, see sig2dot2/TESTING.md
-"
+        echo "\nFor more detailed instructions, see sig2dot2/TESTING.md"
     fi
     echo "$edge_count"
 }
 
+# Parse command-line arguments
+SELF_SIG=false
+DEBUG=false
+
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -s|--self-signatures)
+      SELF_SIG=true
+      shift
+      ;;
+    --debug)
+      DEBUG=true
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+# Check if sig2dot is installed
+if ! command -v sig2dot &> /dev/null; then
+    print_color "1;31" "Error: sig2dot is not installed. Please install it by running 'sudo apt install sig2dot' or by using the provided Debian package."
+    exit 1
+fi
+
 # Check and install GraphViz if needed
 check_graphviz
 
-# Create a temporary file for the DOT output
+# Create temporary files for the DOT output
 print_color "1;34" "Checking for GPG signatures..."
 temp_dot=$(mktemp)
+temp_dot_self_sig=$(mktemp)
 
-# Run gpg and pipe through sig2dot to generate DOT file
-if command -v sig2dot &> /dev/null; then
-    print_color "1;33" "Using system-installed sig2dot..."
-    gpg --list-sigs --with-colons | sig2dot> "$temp_dot"
+# Run sig2dot with and without the self-signatures flag
+SIG2DOT_CMD="sig2dot"
+SIG2DOT_CMD_SELF_SIG="sig2dot -s"
 
-elif command -v sig2dot-custom &> /dev/null; then
-    print_color "1;33" "Using custom sig2dot..."
-    gpg --list-sigs --with-colons | sig2dot-custom > "$temp_dot"
-
-else
-    print_color "1;33" "Using local sig2dot from the project directory..."
-    gpg --list-sigs --with-colons | ./sig2dot-custom > "$temp_dot"
-fi
+# Process the GPG signatures
+gpg --list-sigs --with-colons | $SIG2DOT_CMD > "$temp_dot"
+gpg --list-sigs --with-colons | $SIG2DOT_CMD_SELF_SIG > "$temp_dot_self_sig"
 
 # Check if sig2dot succeeded
 if [ $? -ne 0 ]; then
-    print_color "1;31" "Error: sig2dot processing failed"
-    rm "$temp_dot"
-    exit 1
+  print_color "1;31" "Error: sig2dot processing failed"
+  rm "$temp_dot"
+  rm "$temp_dot_self_sig"
+  exit 1
 fi
 
 # Check for key relationships
 edge_count=$(check_relationships "$temp_dot")
+edge_count_self_sig=$(check_relationships "$temp_dot_self_sig")
 
-# Debugging: Output the DOT file content
-print_color "1;34" "Debugging: Displaying DOT file content..."
-cat "$temp_dot"
+# Debugging: Output the DOT file content if --debug is set
+if [ "$DEBUG" = true ]; then
+  print_color "1;34" "Debugging: Displaying DOT file content..."
+  cat "$temp_dot"
+  cat "$temp_dot_self_sig"
+fi
 
 # Generate PNG from DOT file
 print_color "1;34" "Generating keysigs.png..."
 dot -Tpng "$temp_dot" -o keysigs.png
+dot -Tpng "$temp_dot_self_sig" -o keysigs_self_sig.png
 
 # Check if dot succeeded
 if [ $? -ne 0 ]; then
-    print_color "1;31" "Error: dot processing failed"
-    rm "$temp_dot"
-    exit 1
+  print_color "1;31" "Error: dot processing failed"
+  rm "$temp_dot"
+  rm "$temp_dot_self_sig"
+  exit 1
 fi
 
-# Clean up temporary file
+# Clean up temporary files
 rm "$temp_dot"
+rm "$temp_dot_self_sig"
 
-print_color "1;32" "Successfully generated keysigs.png"
+print_color "1;32" "Successfully generated keysigs.png and keysigs_self_sig.png"
 
 # Provide guidance if no relationships were detected
 if [ "$edge_count" -eq 0 ]; then
-    print_color "1;33" "
+  print_color "1;33" "
 Note: The generated graph shows keys without relationships. To see connections, ensure keys are cross-signed.
 "
+fi
+if [ "$edge_count_self_sig" -eq 0 ]; then
+  print_color "1;33" "
+Note: The generated graph with self-signatures shows keys without relationships. To see connections, ensure keys are cross-signed.
+"
+fi
+
+# Offer to open the keysigs.png using common image viewers
+if command -v feh &> /dev/null; then
+    read -p "Do you want to open keysigs.png with feh? (y/n): " open_image
+    if [[ "$open_image" == "y" || "$open_image" == "Y" ]]; then
+        feh keysigs.png
+    fi
+else
+    echo "feh is not installed. Please install it or use another image viewer to open keysigs.png."
 fi
