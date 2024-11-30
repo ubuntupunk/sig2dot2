@@ -80,4 +80,4 @@ Contributions are welcome! Please feel free to submit pull requests or open issu
 - Code optimizations
 
 ## License
-[Insert appropriate license information]
+This project is licensed under the GPL License - see the [LICENSE.md](LICENSE.md) file for details.
