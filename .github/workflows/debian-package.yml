@@ -1,0 +1,36 @@
+name: Build Debian Package
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y devscripts debhelper perl graphviz
+
+    - name: Build Debian package
+      run: |
+        dpkg-buildpackage -us -uc -b
+
+    - name: Rename build
+      run: |
+        mv ../*.deb ../sig2dot2.deb
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: sig2dot2
+        path: ../sig2dot2.deb
