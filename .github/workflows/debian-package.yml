@@ -1,4 +1,4 @@
-name: Build Debian Package
+name: Build Debian Package and Automated Tagging and Release
 
 on:
   push:
@@ -32,6 +32,9 @@ jobs:
       run: ./tagging-script.sh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate Changelog
+      run: ./generate-changelog.sh
 
     - name: Get latest tag
       id: get_tag
