@@ -39,7 +39,7 @@ case $VERSION_BUMP in
 esac
 
 # Create the new version tag
-NEW_TAG="v${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
+NEW_TAG="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
 
 # Tag the new version
 git tag -a $NEW_TAG -m "Release $NEW_TAG"
