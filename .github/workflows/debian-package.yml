@@ -42,6 +42,30 @@ jobs:
         dpkg-deb --build package
         mv package.deb sig2dot2.deb
 
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v0.1.0
+        release_name: Release v0.1.0
+        body: |
+          ## Changelog
+          - Initial release with sig2dot2 and sig2dot-custom
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: sig2dot2.deb
+        asset_name: sig2dot2.deb
+        asset_content_type: application/vnd.debian.binary-package
+
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
