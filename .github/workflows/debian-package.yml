@@ -37,7 +37,7 @@ jobs:
         echo "Maintainer: David Robert Lewis <ubuntupunk@gmail.com>" >> package/DEBIAN/control
         echo "Description: A tool for visualizing GPG key signatures." >> package/DEBIAN/control
         mkdir -p package/usr/local/bin
-        cp /usr/local/bin/sig2dot package/usr/local/bin/
+        cp /usr/local/bin/sig2dot-custom package/usr/local/bin/
         cp /usr/local/bin/sig2dot2 package/usr/local/bin/
         dpkg-deb --build package
         mv package.deb sig2dot2.deb
