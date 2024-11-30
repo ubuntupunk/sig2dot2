@@ -19,18 +19,31 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y devscripts debhelper perl graphviz
+        sudo apt-get install -y devscripts debhelper perl graphviz build-essential dpkg-deb
+
+    - name: Install project
+      run: |
+        sudo make install PREFIX=/usr/local
 
     - name: Build Debian package
       run: |
-        dpkg-buildpackage -us -uc -b
-
-    - name: Rename build
-      run: |
-        mv ../*.deb ../sig2dot2.deb
+        mkdir -p package/DEBIAN
+        echo "Package: sig2dot2" > package/DEBIAN/control
+        echo "Version: 0.01" >> package/DEBIAN/control
+        echo "Section: utils" >> package/DEBIAN/control
+        echo "Priority: optional" >> package/DEBIAN/control
+        echo "Architecture: all" >> package/DEBIAN/control
+        echo "Depends: perl, graphviz" >> package/DEBIAN/control
+        echo "Maintainer: David Robert Lewis <ubuntupunk@gmail.com>" >> package/DEBIAN/control
+        echo "Description: A tool for visualizing GPG key signatures." >> package/DEBIAN/control
+        mkdir -p package/usr/local/bin
+        cp /usr/local/bin/sig2dot package/usr/local/bin/
+        cp /usr/local/bin/sig2dot2 package/usr/local/bin/
+        dpkg-deb --build package
+        mv package.deb sig2dot2.deb
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: sig2dot2
-        path: ../sig2dot2.deb
+        path: sig2dot2.deb
