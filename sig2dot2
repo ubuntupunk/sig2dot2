@@ -97,11 +97,16 @@ check_relationships() {
 # Parse command-line arguments
 SELF_SIG=false
 DEBUG=false
+JAAL=false
 
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     -s|--self-signatures)
       SELF_SIG=true
+      shift
+      ;;
+    --jaal)
+      JAAL=true
       shift
       ;;
     --debug)
@@ -166,6 +171,21 @@ if [ $? -ne 0 ]; then
   rm "$temp_dot"
   rm "$temp_dot_self_sig"
   exit 1
+fi
+
+# Output data for Jaal visualization
+if [ "$JAAL" = true ]; then
+    # Example: Output nodes and edges in CSV format
+    echo "id,label" > nodes.csv
+    echo "key1,User 1" >> nodes.csv
+    echo "key2,User 2" >> nodes.csv
+
+    echo "source,target" > edges.csv
+    echo "key1,key2" >> edges.csv
+    echo "key2,key3" >> edges.csv
+
+    print_color "1;32" "Jaal visualization data generated: nodes.csv, edges.csv"
+    exit 0
 fi
 
 # Clean up temporary files

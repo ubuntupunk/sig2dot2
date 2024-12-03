@@ -79,7 +79,7 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          package/*.deb
+          package/DEBIAN/*.deb
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v4
