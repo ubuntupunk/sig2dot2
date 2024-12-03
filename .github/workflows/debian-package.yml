@@ -54,12 +54,10 @@ jobs:
     - name: Build Jaal Binary
       run: pyinstaller --onefile jaal/visualize_with_jaal.py
 
-    - name: Move Binary to Package
-      run: mv dist/visualize_with_jaal package/usr/local/bin/
-
     - name: Build Debian package
       run: |
         mkdir -p package/DEBIAN
+        mkdir -p package/usr/local/bin
         echo "Package: sig2dot2" > package/DEBIAN/control
         echo "Version: ${{ steps.get_tag.outputs.tag }}" >> package/DEBIAN/control
         echo "Section: utils" >> package/DEBIAN/control
@@ -68,9 +66,9 @@ jobs:
         echo "Depends: perl, graphviz" >> package/DEBIAN/control
         echo "Maintainer: David Robert Lewis <ubuntupunk@gmail.com>" >> package/DEBIAN/control
         echo "Description: A tool for visualizing GPG key signatures." >> package/DEBIAN/control
-        mkdir -p package/usr/local/bin
         cp /usr/local/bin/sig2dot-custom package/usr/local/bin/
         cp /usr/local/bin/sig2dot2 package/usr/local/bin/
+        mv dist/visualize_with_jaal package/usr/local/bin/
         dpkg-deb --build package
         mv package.deb package/sig2dot2.deb
 
