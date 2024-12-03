@@ -36,6 +36,9 @@ jobs:
     - name: Generate Changelog
       run: ./generate-changelog.sh
 
+    - name: Debug Changelog Content
+      run: cat CHANGELOG.md
+
     - name: Read Changelog
       id: changelog
       run: echo "changelog=$(cat CHANGELOG.md)" >> $GITHUB_ENV
