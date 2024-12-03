@@ -48,6 +48,15 @@ jobs:
       run: |
         sudo make install PREFIX=/usr/local
 
+    - name: Install PyInstaller
+      run: pip install pyinstaller
+
+    - name: Build Jaal Binary
+      run: pyinstaller --onefile jaal/visualize_with_jaal.py
+
+    - name: Move Binary to Package
+      run: mv dist/visualize_with_jaal package/usr/local/bin/
+
     - name: Build Debian package
       run: |
         mkdir -p package/DEBIAN
