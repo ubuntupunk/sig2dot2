@@ -120,8 +120,8 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Check if sig2dot is installed
-if ! command -v sig2dot &> /dev/null; then
-    print_color "1;31" "Error: sig2dot is not installed. Please install it by running 'sudo apt install sig2dot' or by using the provided Debian package."
+if ! command -v sig2dot-custom &> /dev/null; then
+    print_color "1;31" "Error: sig2dot-custom is not installed. Please install it by running 'sudo apt install sig2dot' or by using the provided Debian package."
     exit 1
 fi
 
@@ -134,8 +134,8 @@ temp_dot=$(mktemp)
 temp_dot_self_sig=$(mktemp)
 
 # Run sig2dot with and without the self-signatures flag
-SIG2DOT_CMD="sig2dot"
-SIG2DOT_CMD_SELF_SIG="sig2dot -s"
+SIG2DOT_CMD="sig2dot-custom"
+SIG2DOT_CMD_SELF_SIG="sig2dot-custom -s"
 
 # Process the GPG signatures
 gpg --list-sigs --with-colons | $SIG2DOT_CMD > "$temp_dot"
