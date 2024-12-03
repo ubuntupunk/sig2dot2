@@ -63,7 +63,7 @@ jobs:
         cp /usr/local/bin/sig2dot-custom package/usr/local/bin/
         cp /usr/local/bin/sig2dot2 package/usr/local/bin/
         dpkg-deb --build package
-        mv package.deb sig2dot2.deb
+        mv package.deb package/sig2dot2.deb
 
     - name: List Package Directory
       run: ls -l package
@@ -79,10 +79,10 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          package/DEBIAN/*.deb
+          package/*.deb
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v4
       with:
         name: sig2dot2
-        path: sig2dot2.deb
+        path: package/sig2dot2.deb
