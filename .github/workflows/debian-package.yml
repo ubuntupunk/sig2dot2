@@ -65,6 +65,9 @@ jobs:
         dpkg-deb --build package
         mv package.deb sig2dot2.deb
 
+    - name: List Package Directory
+      run: ls -l package
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2.1.0
       env:
